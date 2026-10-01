@@ -45,12 +45,12 @@ npm run build
 
 連接 **tina458615/chiayigame.github.io** 這個 repo，設定：
 
-| 欄位 | 值 |
-|---|---|
-| Production branch | `main` |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node.js | 22.12 以上，建議 22 的最新修補版 |
+| 欄位                   | 值                               |
+| ---------------------- | -------------------------------- |
+| Production branch      | `main`                           |
+| Build command          | `npm run build`                  |
+| Build output directory | `dist`                           |
+| Node.js                | 22.12 以上，建議 22 的最新修補版 |
 
 `dist` 不放根目錄 `404.html`，使用 Cloudflare Pages 內建 SPA fallback。路由與資產使用網站根目錄；不要將 `dist` 直接用目前 GitHub Pages 的子路徑設定部署。先驗證分支預覽再合併到正式分支。
 

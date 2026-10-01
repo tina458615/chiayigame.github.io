@@ -1,2 +1,20 @@
-<script setup>import TopBar from '../components/TopBar.vue'</script>
-<template><section class="screen active"><TopBar to="/points" label="← 回集點頁" title="集點完成" /><div class="card pointSummary"><div class="bigStamp">五章<br>集滿</div><h2 class="title" style="font-size:30px">恭喜完成集點！</h2><p class="subtitle">你已找回五區的嘉義生活故事，獲得一次獎勵兌換資格。</p><div class="rewardBox"><h3>獎勵兌換參考</h3><p>可兌換：桃城百味紀念明信片一張，或嘉義在地風味小禮一份。</p><p class="tiny">正式活動請依現場公告與服務台實際供應內容為準。</p><span class="rewardStatus">兌換資格已解鎖</span></div><RouterLink class="primary" to="/map">回地圖探索</RouterLink></div></section></template>
+<script setup>
+import TopBar from "../components/TopBar.vue";
+</script>
+<template>
+  <section class="screen active">
+    <TopBar to="/points" label="← 回集點頁" title="集點完成" />
+    <div class="card pointSummary">
+      <div class="bigStamp">五章<br />集滿</div>
+      <h2 class="title" style="font-size: 30px">恭喜完成集點！</h2>
+      <p class="subtitle">你已找回五區的嘉義生活故事，獲得一次獎勵兌換資格。</p>
+      <div class="rewardBox">
+        <h3>獎勵兌換參考</h3>
+        <p>可兌換：桃城百味紀念明信片一張，或嘉義在地風味小禮一份。</p>
+        <p class="tiny">正式活動請依現場公告與服務台實際供應內容為準。</p>
+        <span class="rewardStatus">兌換資格已解鎖</span>
+      </div>
+      <RouterLink class="primary" to="/map">回地圖探索</RouterLink>
+    </div>
+  </section>
+</template>
