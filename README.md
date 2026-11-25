@@ -46,15 +46,6 @@ Vue 3 + Vite + Vue Router 的手機實境遊戲。以案主 0930 版本的內容
   - `OLD/public-img/`：舊首頁圖（`home-visual.webp`）、舊版無陰影立繪（`img2.png`、`img3.png`）、未使用的舊展場照／圖示（`img1.png`、`img6.png`、`img7.jpg`～`img15.jpg`）、舊老屋架構與正面牆（`old-house-frame.svg`、`old-house-front.png`）以及與 `public/assets/targets/` 重複之參考圖副本。
   - `OLD/assets-img/`：舊版主視覺原檔（`主視覺v1.png`、`主視覺v2.png`、`主視覺-無標準字.png`）及對應已汰換原圖。
 
-## 協作夥伴待辦：第 3 小關 AR 掃描圖
-
-以下兩關的實際 AR 辨識目標尚待協作夥伴更新。本次提交保留參考原圖，不修改 MindAR 辨識資料或掃描流程；這些參考圖目前尚未編入 `targets.mind`：
-
-- **嘉義滋味｜第 3 小關（豆漿豆花）**：原圖 `assets/img/嘉義滋味第3小關AR掃描.jpg`，參考副本 `public/assets/targets/food-douhua-level3.jpg`。
-- **百工巷｜第 3 小關（管樂小雞刺繡）**：原圖 `assets/img/百工巷第3小關AR掃描.jpg`，參考副本 `public/assets/targets/craft-wind-chicken-level3.jpg`。
-
-請協作夥伴將兩張參考圖加入為第 3 小關的辨識目標（不要覆蓋五張展區桃喜目標），設定各關只接受正確目標，重新編譯 `public/assets/targets/targets.mind`，並同步維護個別目標檔、`public/assets/targets/manifest.json` 和 `src/services/scan-targets.js`。完成後請驗證這兩關及原有五區尋找桃喜的掃描流程。
-
 ## 開發與驗證
 
 Node.js 22.12 以上：
