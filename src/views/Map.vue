@@ -1,5 +1,5 @@
 <script setup>
-import { zones, order } from "../data/game.js";
+import { zones, order, mapStickers, asset } from "../data/game.js";
 import { game, doneCount } from "../store.js";
 import TopBar from "../components/TopBar.vue";
 import ProgressDots from "../components/ProgressDots.vue";
@@ -12,25 +12,29 @@ const descriptions = {
 };
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-general">
     <TopBar to="/" label="←" title="任務地圖" />
     <div class="questBadge">Quest Map</div>
-    <h2 class="title" style="font-size: 30px">
-      <span class="pink">桃喜</span>的百味手帳
-    </h2>
+    <h2 class="title"><span class="pink">桃喜</span>的百味手帳</h2>
     <ProgressDots />
     <div class="mapPanel">
-      <div class="route"></div>
       <RouterLink
         v-for="id in order"
         :key="id"
         :to="`/zone/${id}/intro`"
-        class="zone"
-        :class="[`z-${id}`, { done: game.done[id] }]"
-        ><img :src="`/${zones[id].mapIcon}`" :alt="`${zones[id].name}圖示`" /><span
-          >{{ zones[id].name }}<small>{{ descriptions[id] }}</small></span
-        ></RouterLink
+        class="zoneSticker"
+        :class="[`zs-${id}`, { done: game.done[id] }]"
+        :aria-label="`${zones[id].name}（${descriptions[id]}）${game.done[id] ? '，已完成' : ''}`"
       >
+        <img
+          :src="asset(mapStickers[id])"
+          :alt="`${zones[id].name}：${descriptions[id]}`"
+          class="zoneStickerImg"
+        />
+        <span v-if="game.done[id]" class="zoneDoneMark" aria-hidden="true"
+          >✓</span
+        >
+      </RouterLink>
     </div>
     <div class="mapHint">
       📍 已找回 <b>{{ doneCount }} / 5</b> 頁《百味手帳》

@@ -1,8 +1,8 @@
 <script setup>
-import { ref, nextTick, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { zones, asset } from "../data/game.js";
-import { game, finishQuestion } from "../store.js";
+import { game, settings, finishQuestion } from "../store.js";
 import { nextPath } from "../progress.js";
 import TopBar from "../components/TopBar.vue";
 const route = useRoute(),
@@ -11,6 +11,25 @@ const route = useRoute(),
   zone = zones[id],
   number = Number(route.params.number),
   question = zone.questions[number - 1];
+
+const questionParts = computed(() => {
+  const blocks = (question.text || "")
+    .split(/\n{2,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const paragraphs = [];
+  let clue = "";
+  for (const block of blocks) {
+    if (block.startsWith("🔎")) {
+      clue = block
+        .replace(/^🔎\s*(?:線索|解謎提示|追蹤提示)\s*[：:]?\s*\n?/, "")
+        .trim();
+    } else {
+      paragraphs.push(block);
+    }
+  }
+  return { paragraphs, clue };
+});
 const answer = ref(""),
   answers = ref(question.fields ? question.fields.map(() => "") : []),
   selected = ref(null),
@@ -126,9 +145,6 @@ function startDrag(event, item) {
 function stageClick(event) {
   if (armed.value) tryPlace(armed.value, event.clientX, event.clientY);
 }
-function autoSolve() {
-  for (const item of pieces) if (!accepted.value) place(item);
-}
 const reveal = ref(0),
   canAskMotion = ref(false);
 let lastMagnitude = null,
@@ -171,19 +187,37 @@ async function enableMotion() {
     // Permission denied; the test button still works.
   }
 }
+function onShakeKeydown(event) {
+  if (
+    accepted.value ||
+    settings.open ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(event.target?.tagName)
+  )
+    return;
+  if (event.key === "s" || event.key === "S") {
+    event.preventDefault();
+    addReveal(100);
+  }
+}
 onMounted(() => {
-  if (question.type !== "shake" || !("DeviceMotionEvent" in window)) return;
+  if (question.type !== "shake") return;
+  window.addEventListener("keydown", onShakeKeydown);
+  if (!("DeviceMotionEvent" in window)) return;
   if (typeof DeviceMotionEvent.requestPermission === "function")
     canAskMotion.value = true;
   else window.addEventListener("devicemotion", onMotion);
 });
 onBeforeUnmount(() => {
   clearTimeout(timer);
+  window.removeEventListener("keydown", onShakeKeydown);
   window.removeEventListener("devicemotion", onMotion);
 });
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-stage">
     <TopBar :title="zone.name + '｜' + question.stage" />
     <div class="card">
       <img
@@ -193,7 +227,15 @@ onBeforeUnmount(() => {
         alt="桃喜"
       />
       <div class="questionNum">{{ question.stage }}</div>
-      <div class="question">{{ question.text }}</div>
+      <div class="stageDesc questionDesc">
+        <p v-for="line in questionParts.paragraphs" :key="line" class="preLine">
+          {{ line }}
+        </p>
+      </div>
+      <div v-if="questionParts.clue" class="clueCallout">
+        <div class="clueCalloutTitle">🔎 線索</div>
+        <div class="clueCalloutBody preLine">{{ questionParts.clue }}</div>
+      </div>
       <div v-if="question.type === 'choice'" class="options">
         <button
           v-for="(option, index) in question.options"
@@ -241,7 +283,9 @@ onBeforeUnmount(() => {
             <figcaption>{{ field.caption }}</figcaption>
           </figure>
         </div>
-        <div v-if="question.prompt" class="question">{{ question.prompt }}</div>
+        <div v-if="question.prompt" class="questionPrompt">
+          {{ question.prompt }}
+        </div>
         <label v-for="(field, index) in question.fields" :key="field.label" class="fieldRow">
           <span>{{ field.label }}：</span>
           <input
@@ -260,15 +304,13 @@ onBeforeUnmount(() => {
           <div class="shakeCover" :style="{ opacity: 1 - reveal / 100 }"></div>
         </div>
         <div class="tiny">顯現進度 {{ reveal }}%</div>
-        <button v-if="canAskMotion" class="secondary" @click="enableMotion">
-          啟用搖動感應</button
-        ><button
+        <button
+          v-if="canAskMotion"
           class="secondary"
           style="margin-top: 10px"
-          :disabled="accepted"
-          @click="addReveal(25)"
+          @click="enableMotion"
         >
-          測試：模擬搖動</button
+          啟用搖動感應</button
         ><button
           v-if="accepted"
           class="primary"
@@ -284,7 +326,7 @@ onBeforeUnmount(() => {
           class="questionImage"
           alt="桃喜留下的圖片"
         />
-        <div v-if="question.prompt" class="question">
+        <div v-if="question.prompt" class="questionPrompt">
           {{ question.prompt }}
         </div>
         <button class="primary" @click="scan">開始 AR 掃描</button></template
@@ -299,6 +341,7 @@ onBeforeUnmount(() => {
           <img
             :src="asset(question.frame)"
             class="assembleFrame"
+            style="z-index: 2"
             alt="老屋木構架"
             draggable="false"
           />
@@ -307,7 +350,7 @@ onBeforeUnmount(() => {
             :key="'ghost-' + item.id"
             :src="asset(item.image)"
             class="assembleGhost"
-            :style="boxStyle(item.box, 1)"
+            :style="boxStyle(item.box, item.behind ? 1 : 3)"
             alt=""
             draggable="false"
           />
@@ -316,7 +359,7 @@ onBeforeUnmount(() => {
             :key="'placed-' + item.id"
             :src="asset(item.image)"
             class="assemblePlaced"
-            :style="boxStyle(item.box, pieces.indexOf(item) + 2)"
+            :style="boxStyle(item.box, item.behind ? 1 : pieces.indexOf(item) + 3)"
             :alt="item.label"
             draggable="false"
           />
@@ -337,13 +380,6 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <button
-          class="secondary"
-          style="margin-top: 10px"
-          :disabled="accepted"
-          @click="autoSolve"
-        >
-          測試：自動完成拼圖</button
-        ><button
           v-if="accepted"
           class="primary"
           style="margin-top: 10px"

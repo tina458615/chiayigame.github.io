@@ -133,6 +133,7 @@ test("preparation does not open camera; navigation and direct routes restore cor
   ).toEqual({ calls: 0, input: "CANVAS" });
   await page.getByRole("link", { name: "開始任務" }).click();
   await expect(page).toHaveURL(/\/select$/);
+  await expect(page.locator(".footerNav")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "開始冒險！" })).toBeDisabled();
   await page.getByRole("radio", { name: "女生小幫手" }).click();
   await page.getByRole("button", { name: "開始冒險！" }).click();
@@ -144,7 +145,7 @@ test("preparation does not open camera; navigation and direct routes restore cor
   await page.goto("/intro?line=11");
   await expect(page.locator(".portraitWrap img")).toHaveAttribute(
     "src",
-    /player-girl\.png$/,
+    /char-girl-shadow\.png$/,
   );
   await page.goto("/intro?line=15");
   await page.getByRole("button", { name: "進入遊戲教學" }).click();
@@ -197,10 +198,14 @@ test("camera starts on request, wrong image stays scanning, exit cancels success
   await page.getByRole("button", { name: "開始尋找桃喜" }).click();
   await expect(page.locator(".scanTopHint")).toContainText("相機權限未開啟");
 });
-test("test skip button passes a scan without the camera", async ({ page }) => {
+test("S key shortcut passes a scan without showing a skip button", async ({
+  page,
+}) => {
   await setup(page);
   await page.goto("/zone/food/scan/taoxi");
-  await page.getByRole("button", { name: "測試：略過掃描" }).click();
+  await expect(page.getByRole("button", { name: "啟動相機辨識" })).toBeVisible();
+  await expect(page.locator(".testSkip")).toHaveCount(0);
+  await page.keyboard.press("s");
   await expect(page).toHaveURL(/\/zone\/food\/scene$/);
   expect(await page.evaluate(() => window.cameraCalls)).toBe(0);
   await page.goto("/zone/food/question/1");
@@ -209,8 +214,18 @@ test("test skip button passes a scan without the camera", async ({ page }) => {
   await page.goto("/zone/food/scene/1?line=5");
   await page.getByRole("button", { name: "前往謎題挑戰" }).click();
   await page.getByRole("button", { name: "開始 AR 掃描" }).click();
-  await page.getByRole("button", { name: "測試：略過掃描" }).click();
+  await page.keyboard.press("s");
   await expect(page).toHaveURL(/\/zone\/food\/stamp$/);
+  await page.goto("/zone/store/scan/taoxi");
+  await page.keyboard.press("s");
+  await expect(page).toHaveURL(/\/zone\/store\/scene$/);
+  await page.goto("/zone/store/question/1");
+  await page.keyboard.press("s");
+  await expect(page.getByText("顯現進度 100%")).toBeVisible();
+  await page.waitForTimeout(900);
+  await expect(page).toHaveURL(/\/zone\/store\/question\/1$/);
+  await page.getByRole("button", { name: "繼續" }).click();
+  await expect(page).toHaveURL(/\/zone\/store\/scene\/1$/);
 });
 test("home clue page plays and pauses the melody", async ({ page }) => {
   await setup(page);
@@ -232,6 +247,7 @@ test("five zone journeys award stamps once and unlock stories and rewards", asyn
   page.on("pageerror", (e) => errors.push(e.message));
   for (const id of ["food", "daily", "home", "store", "craft"]) {
     await page.goto(`/zone/${id}/clue`);
+    await expect(page.locator(".scenePhoto")).toHaveCount(0);
     await page.getByRole("button", { name: "開始尋找桃喜" }).click();
     await scan(page);
     await expect(page).toHaveURL(new RegExp(`/zone/${id}/scene$`));
@@ -242,19 +258,37 @@ test("five zone journeys award stamps once and unlock stories and rewards", asyn
       await page.getByRole("textbox").fill("澳洲新山");
       await page.getByRole("button", { name: "送出" }).click();
     } else if (id === "store") {
-      await page.getByRole("button", { name: "測試：模擬搖動" }).click();
-      await expect(page.getByText("顯現進度 25%")).toBeVisible();
-      for (let i = 0; i < 3; i++)
-        await page.getByRole("button", { name: "測試：模擬搖動" }).click();
+      await expect(
+        page.getByRole("button", { name: "測試：模擬搖動" }),
+      ).toHaveCount(0);
+      const enableBtn = page.getByRole("button", { name: "啟用搖動感應" });
+      if (await enableBtn.isVisible()) {
+        await page.evaluate(() => {
+          DeviceMotionEvent.requestPermission = async () => "granted";
+        });
+        await enableBtn.click();
+      }
+      await page.evaluate(async () => {
+        for (let i = 0; i < 15; i++) {
+          const ev = new Event("devicemotion");
+          ev.accelerationIncludingGravity = {
+            x: i % 2 === 0 ? 0 : 25,
+            y: 0,
+            z: 9.8,
+          };
+          window.dispatchEvent(ev);
+          await new Promise((r) => setTimeout(r, 130));
+        }
+      });
       await expect(page.locator(".feedback")).toContainText("照片顯現了");
       await page.getByRole("button", { name: "繼續" }).click();
     } else if (id === "home") {
-      await page.getByRole("textbox", { name: "陸軍" }).fill("復國新村");
-      await page.getByRole("textbox", { name: "空軍" }).fill("建國二村");
-      await page.getByRole("button", { name: "送出" }).click();
-      await expect(page.locator(".feedback")).toContainText("再觀察一下");
       await page.getByRole("textbox", { name: "陸軍" }).fill("建國二村");
       await page.getByRole("textbox", { name: "空軍" }).fill("復國新村");
+      await page.getByRole("button", { name: "送出" }).click();
+      await expect(page.locator(".feedback")).toContainText("再觀察一下");
+      await page.getByRole("textbox", { name: "陸軍" }).fill("復興新村");
+      await page.getByRole("textbox", { name: "空軍" }).fill("建國二村");
       await page.getByRole("button", { name: "送出" }).click();
     } else {
       await page.locator(".opt").first().click();
@@ -275,6 +309,12 @@ test("five zone journeys award stamps once and unlock stories and rewards", asyn
       await page.getByRole("textbox", { name: "國家為" }).fill("中國大陸");
       await page.getByRole("button", { name: "送出" }).click();
     } else if (id === "store") {
+      await expect(
+        page.getByRole("button", { name: "測試：自動完成拼圖" }),
+      ).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "正面牆零件" })).toHaveCount(
+        0,
+      );
       // The page scrolls when pieces are clicked, so measure the board each time.
       const at = async (x, y) => {
         const board = await page.locator(".assembleStage").boundingBox();
@@ -287,26 +327,21 @@ test("five zone journeys award stamps once and unlock stories and rewards", asyn
       await page.getByRole("button", { name: "屋頂零件" }).click();
       await page.mouse.click(...(await at(30, 480)));
       await expect(page.locator(".feedback")).toContainText("位置不對");
-      await page.mouse.click(...(await at(313, 126)));
+      await page.mouse.click(...(await at(309, 163)));
       await expect(page.locator(".feedback")).toContainText("屋頂已固定");
       // Dragging works as well as tap-to-place.
-      const front = await page
-        .getByRole("button", { name: "正面牆零件" })
+      const leftWall = await page
+        .getByRole("button", { name: "左側牆零件" })
         .boundingBox();
-      await page.mouse.move(front.x + front.width / 2, front.y + 20);
+      await page.mouse.move(leftWall.x + leftWall.width / 2, leftWall.y + 20);
       await page.mouse.down();
-      await page.mouse.move(...(await at(245, 306)), { steps: 8 });
+      await page.mouse.move(...(await at(198, 226)), { steps: 8 });
       await page.mouse.up();
-      await expect(page.getByRole("button", { name: "正面牆零件" })).toHaveCount(
+      await expect(page.getByRole("button", { name: "左側牆零件" })).toHaveCount(
         0,
       );
-      for (const [label, x, y] of [
-        ["右側牆", 448, 283],
-        ["左側牆", 160, 245],
-      ]) {
-        await page.getByRole("button", { name: label + "零件" }).click();
-        await page.mouse.click(...(await at(x, y)));
-      }
+      await page.getByRole("button", { name: "右側牆零件" }).click();
+      await page.mouse.click(...(await at(416, 323)));
       await expect(page.locator(".feedback")).toContainText("拼圖完成");
       await page.getByRole("button", { name: "繼續" }).click();
     } else {
@@ -320,6 +355,24 @@ test("five zone journeys award stamps once and unlock stories and rewards", asyn
   await page.getByRole("link", { name: "集點" }).click();
   await expect(page).toHaveURL(/\/points$/);
   await expect(page.locator(".pointCount")).toContainText("5");
+  await expect(
+    page.getByRole("button", { name: "重置 Demo 進度" }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "查看完成回饋" }).click();
+  await expect(page).toHaveURL(/\/reward$/);
+  await page
+    .getByRole("button", { name: "進行兌換（由工作人員操作）" })
+    .click();
+  await expect(
+    page.getByRole("alertdialog", { name: "確認進行兌換" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "取消" }).click();
+  await expect(page.locator(".rewardStatus")).toHaveText("兌換資格已解鎖");
+  await page
+    .getByRole("button", { name: "進行兌換（由工作人員操作）" })
+    .click();
+  await page.getByRole("button", { name: "確認兌換" }).click();
+  await expect(page.locator(".rewardStatus")).toHaveText("已經兌換");
   await page.goto("/map");
   await expect(page.locator(".completeNote")).toContainText(
     "（已完成集點，請至集點頁面查看）",
@@ -327,5 +380,88 @@ test("five zone journeys award stamps once and unlock stories and rewards", asyn
   await expect(page.locator(".zoneList")).toHaveCount(0);
   await page.goto("/stories/food");
   await expect(page.locator(".bookPage h3")).toHaveText("嘉義涼麵的美味魔法！");
+  await expect(page.locator(".screen-diary-taoxi")).toBeVisible();
+  await page.goto("/stories/extra6");
+  await expect(page.locator(".screen-diary-jiabo")).toBeVisible();
+  // Restarting the game resets progress, but keeps the redeemed status.
+  await page.getByRole("button", { name: "設定" }).click();
+  await page.getByRole("button", { name: "重新開始遊戲" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/points");
+  await expect(page.locator(".pointCount")).toContainText("0");
+  await expect(page.locator(".rewardStatus")).toHaveText("已經兌換");
   expect(errors).toEqual([]);
+});
+test("dialogue controls stay fixed and typography settings persist", async ({
+  page,
+}) => {
+  await setup(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator(".homeVisual")).toHaveAttribute(
+    "src",
+    /home-visual-v4\.jpg$/,
+  );
+  await expect(page.locator(".homeTitle")).toHaveAttribute(
+    "src",
+    /game-title\.png$/,
+  );
+  await page.getByRole("link", { name: "開始任務" }).click();
+  await page.getByRole("radio", { name: "男生小幫手" }).click();
+  await page.getByRole("button", { name: "開始冒險！" }).click();
+  await expect(page).toHaveURL(/\/intro$/);
+  // Narrator lines also display the chosen helper sprite without overflowing text.
+  await expect(page.locator(".portraitWrap img")).toHaveAttribute(
+    "src",
+    /char-boy-shadow\.png$/,
+  );
+  const nextBtn = page.getByRole("button", { name: "下一句" });
+  const box1 = await nextBtn.boundingBox();
+  for (let line = 1; line <= 15; line++) {
+    await page.goto(`/intro?line=${line}`);
+    const overflows = await page.evaluate(() => {
+      const el = document.querySelector(".dialogueText");
+      return el.scrollHeight > el.clientHeight + 2;
+    });
+    expect(overflows, `intro line ${line} should not overflow`).toBe(false);
+  }
+  await page.goto("/intro?line=10");
+  const box10 = await nextBtn.boundingBox();
+  await page.goto("/intro?line=11");
+  const box11 = await nextBtn.boundingBox();
+  expect(Math.abs(box1.y - box10.y)).toBeLessThan(2);
+  expect(Math.abs(box10.y - box11.y)).toBeLessThan(2);
+  // Tutorial should not show the removed hint line.
+  await page.goto("/tutorial");
+  await expect(page.locator(".dialogueHint")).toHaveCount(0);
+  // Open Settings modal and change font family & font size
+  await page.getByRole("button", { name: "設定" }).click();
+  await expect(page.getByRole("dialog", { name: "設定" })).toBeVisible();
+  await page.getByLabel("設定文字字體").selectOption("serif");
+  await page.getByLabel("設定文字大小").selectOption("large");
+  await page.getByRole("button", { name: "確認" }).click();
+  await expect(page.getByRole("dialog", { name: "設定" })).toHaveCount(0);
+  const scaleBefore = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--text-scale")
+      .trim(),
+  );
+  expect(scaleBefore).toBe("1.14");
+  await page.reload();
+  const scaleAfter = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--text-scale")
+      .trim(),
+  );
+  expect(scaleAfter).toBe("1.14");
+  // Reset to defaults
+  await page.getByRole("button", { name: "設定" }).click();
+  await page.getByRole("button", { name: "重置為預設" }).click();
+  await page.getByRole("button", { name: "確認" }).click();
+  const scaleReset = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--text-scale")
+      .trim(),
+  );
+  expect(scaleReset).toBe("1");
 });

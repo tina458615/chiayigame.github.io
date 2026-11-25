@@ -2,7 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { asset } from "../data/game.js";
-import { game, foundTaoxi, finishQuestion, notify } from "../store.js";
+import { game, settings, foundTaoxi, finishQuestion, notify } from "../store.js";
 import { nextPath } from "../progress.js";
 import { scanner } from "../services/scanner.js";
 import TopBar from "../components/TopBar.vue";
@@ -55,7 +55,22 @@ function skip() {
   if (!alive || found.value) return;
   complete();
 }
+function onKeydown(event) {
+  if (
+    settings.open ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(event.target?.tagName)
+  )
+    return;
+  if (event.key === "s" || event.key === "S") {
+    event.preventDefault();
+    skip();
+  }
+}
 onMounted(() => {
+  window.addEventListener("keydown", onKeydown);
   if (game.pendingCameraStart === route.path) {
     game.pendingCameraStart = null;
     start();
@@ -63,13 +78,14 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   alive = false;
+  window.removeEventListener("keydown", onKeydown);
   clearTimeout(timer);
   scanner.stop();
   game.pendingCameraStart = null;
 });
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-stage">
     <TopBar
       :to="isTaoxi ? `/zone/${id}/clue` : `/zone/${id}/question/${number}`"
       label="←"
@@ -93,9 +109,7 @@ onBeforeUnmount(() => {
           class="arTaoxi"
           alt="桃喜 AR"
         /><button v-if="canStart" class="scanBtn" @click="start">
-          啟動相機辨識</button
-        ><button v-if="!found" class="scanBtn testSkip" @click="skip">
-          測試：略過掃描
+          啟動相機辨識
         </button>
       </div>
     </div>

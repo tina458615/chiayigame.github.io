@@ -42,7 +42,7 @@ const view = computed(() => {
       backLabel: "← 回地圖",
       tag: zones[zone.value].name,
       title: zones[zone.value].storyTitle,
-      hint: "點擊「下一句」，聽聽這一區的追蹤線索。",
+      hint: "點擊「下一句」，查看這一區的追蹤線索。",
       finishLabel: "開始追蹤桃喜",
       next: `/zone/${zone.value}/clue`,
     };
@@ -52,7 +52,7 @@ const view = computed(() => {
       backLabel: "← 回開場故事",
       tag: "任務說明",
       title: "遊戲教學｜桃喜追蹤器",
-      hint: "點擊「下一句」，了解如何使用桃喜追蹤器。",
+      hint: "",
       finishLabel: "開始追蹤！",
       next: "/map",
     };
@@ -77,20 +77,19 @@ function move(delta) {
 }
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-dialogue">
     <TopBar :to="view.back" :label="view.backLabel" :title="view.tag" />
-    <div class="card">
-      <h2 class="title" style="font-size: 30px">{{ view.title }}</h2>
-      <DialogueBox
-        :item="script[step]"
-        :step="step"
-        :total="script.length"
-        :hint="view.hint"
-        @previous="move(-1)"
-        @next="move(1)"
-        @finish="router.push(view.next)"
-        >{{ view.finishLabel }}</DialogueBox
-      >
-    </div>
+    <h2 class="dialoguePageTitle">{{ view.title }}</h2>
+    <DialogueBox
+      :item="script[step]"
+      :step="step"
+      :total="script.length"
+      :hint="view.hint"
+      :pose="isCutscene ? 'puzzle' : 'normal'"
+      @previous="move(-1)"
+      @next="move(1)"
+      @finish="router.push(view.next)"
+      >{{ view.finishLabel }}</DialogueBox
+    >
   </section>
 </template>

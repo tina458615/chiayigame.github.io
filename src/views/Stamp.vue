@@ -6,7 +6,7 @@ const route = useRoute(),
   zone = zones[route.params.zone];
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-stage">
     <TopBar title="任務完成" />
     <div class="card stampCard">
       <img

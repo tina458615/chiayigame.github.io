@@ -18,9 +18,9 @@ const wikiIcons = [
 ];
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-stories">
     <TopBar title="支線小故事" />
-    <h2 class="title" style="font-size: 30px">百味手帳</h2>
+    <h2 class="title">百味手帳</h2>
     <p class="subtitle">
       完成主線任務，解鎖百味手帳；小嘉博豆知識一開始就能閱讀。
     </p>

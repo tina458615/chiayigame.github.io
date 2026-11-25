@@ -57,7 +57,7 @@
       {
         "type": "text",
         "stage": "第 3 小關",
-        "text": "桃喜留下了一張奇怪的老鷹圖，旁邊寫著「陳」。\n\n看起來，這隻老鷹似乎藏著【百味手帳】的最後線索。\n\n桃喜究竟想告訴我們什麼？\n\n🔎 解謎提示：「老鷹暗示某人的名字。」",
+        "text": "桃喜留下了一張奇怪的老鷹圖，旁邊寫著「陳」。\n\n看起來，這隻老鷹相關的醫館似乎藏著【百味手帳】的最後線索。\n\n桃喜究竟想告訴我們什麼？\n\n🔎 解謎提示：「老鷹暗示某人的名字。」",
         "answer": ["英安堂"],
         "ok": "答對了！手帳頁面就在英安堂。"
       }
@@ -93,16 +93,16 @@
             "label": "陸軍",
             "caption": "陸軍軍徽",
             "image": "assets/img/emblem-army.jpg",
-            "answer": ["建國二村"]
+            "answer": ["復興新村"]
           },
           {
             "label": "空軍",
             "caption": "空軍軍徽",
             "image": "assets/img/emblem-airforce.jpg",
-            "answer": ["復國新村"]
+            "answer": ["建國二村"]
           }
         ],
-        "ok": "答對了！陸軍是建國二村，空軍是復國新村。"
+        "ok": "答對了！陸軍是復興新村，空軍是建國二村。"
       },
       {
         "type": "multitext",
@@ -128,7 +128,7 @@
         "type": "shake",
         "stage": "第 2 小關",
         "text": "桃喜追蹤器拍到了一張黑色照片，但是，照片上的線索還沒有顯現出來。\n\n🖐️ 請用力搖動手機，讓照片顯現！",
-        "image": "assets/img/old-house-frame.svg",
+        "image": "assets/img/old-house-frame.png",
         "ok": "照片顯現了！這是老屋模型的結構圖。"
       },
       {
@@ -142,31 +142,26 @@
           "放到正確位置後，零件會自動固定。",
           "將所有零件放回去，即可完成任務。"
         ],
-        "frame": "assets/img/old-house-frame.svg",
+        "frame": "assets/img/old-house-frame.png",
         "pieces": [
           {
             "id": "left",
             "label": "左側牆",
             "image": "assets/img/old-house-left.png",
-            "box": { "x": 78, "y": 120, "w": 170, "h": 249 }
+            "behind": true,
+            "box": { "x": 46, "y": 72, "w": 304, "h": 308 }
           },
           {
             "id": "right",
             "label": "右側牆",
             "image": "assets/img/old-house-right.png",
-            "box": { "x": 380, "y": 135, "w": 136, "h": 297 }
-          },
-          {
-            "id": "front",
-            "label": "正面牆",
-            "image": "assets/img/old-house-front.png",
-            "box": { "x": 100, "y": 180, "w": 290, "h": 252 }
+            "box": { "x": 254, "y": 176, "w": 324, "h": 294 }
           },
           {
             "id": "roof",
             "label": "屋頂",
             "image": "assets/img/old-house-roof.png",
-            "box": { "x": 98, "y": 4, "w": 430, "h": 244 }
+            "box": { "x": 44, "y": 22, "w": 530, "h": 282 }
           }
         ],
         "ok": "拼圖完成！老屋回復原貌，手帳頁面也找到了。"

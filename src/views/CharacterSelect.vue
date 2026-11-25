@@ -13,10 +13,10 @@ function start() {
 }
 </script>
 <template>
-  <section class="screen active">
+  <section class="screen active screen-general screen-select">
     <TopBar to="/" label="← 回首頁" title="角色選擇" />
     <div class="card selectCard">
-      <h2 class="title" style="font-size: 30px">
+      <h2 class="title">
         成為<span class="pink">桃城小幫手</span>
       </h2>
       <p class="subtitle">
